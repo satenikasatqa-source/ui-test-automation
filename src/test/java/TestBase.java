@@ -1,7 +1,10 @@
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
+import com.codeborne.selenide.logevents.SelenideLogger;
+import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.MutableCapabilities;
 
 import java.util.Map;
@@ -17,16 +20,21 @@ public class TestBase {
         Configuration.timeout = 60000;
 
         String remote = System.getProperty("remote");
-
         if (remote != null && !remote.isBlank()) {
             Configuration.remote = remote;
 
             MutableCapabilities capabilities = new MutableCapabilities();
             capabilities.setCapability("selenoid:options",
                     Map.of("enableVNC", true, "enableVideo", true));
-
             Configuration.browserCapabilities = capabilities;
         }
+    }
+
+    @BeforeEach
+    void addAllureListener() {
+        // на всякий случай, чтобы не копились листенеры
+        SelenideLogger.removeListener("allure");
+        SelenideLogger.addListener("allure", new AllureSelenide());
     }
 
     @AfterEach
@@ -35,7 +43,6 @@ public class TestBase {
         Attach.pageSource();
         Attach.browserConsoleLogs();
         Attach.addVideo();
-
         Selenide.closeWebDriver();
     }
 }
